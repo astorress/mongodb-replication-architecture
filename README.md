@@ -108,7 +108,7 @@ Tres opciones controlan la consistencia en cada operación:
 | `MongoNode2` (`mongo2`) | `mongo:8.2.12` · `mongod --replSet rs0` | 27022 | Nodo SECONDARY |
 | `MongoNode3` (`mongo3`) | `mongo:8.2.12` · `mongod --replSet rs0` | 27023 | Nodo SECONDARY |
 | `MongoReplicaInit` | `mongo:8.2.12` · `init.sh` | — | Se ejecuta una vez: `rs.initiate()` con los 3 miembros y espera un PRIMARY |
-| `MongoReplicaLab` | Python 3.13 · pymongo · mongosh | — | Donde se ejecutan las lecciones |
+| `MongoReplicaLab` | Python 3.13 · pymongo · mongosh · JupyterLab | 8881 | Donde se ejecutan las lecciones y el sandbox |
 
 **Arranque:**
 
@@ -132,6 +132,7 @@ La aplicación se conecta con: `mongodb://mongo1:27017,mongo2:27017,mongo3:27017
 docs/architecture.drawio    # Diagrama
 src/lab/                    # Cliente de MongoDB y funciones para imprimir
 lessons/                    # Lecciones 00-07
+notebooks/sandbox.ipynb     # Sandbox para experimentar con todo lo anterior
 ```
 
 ## 4. Puesta en marcha
@@ -200,6 +201,23 @@ Qué puedes comprobar:
 | `07_change_streams.py` | Escucha en tiempo real los cambios de `employees`; se detiene a la mitad y **reanuda** con el *resume token*. | No se pierde ningún evento al reanudar. |
 
 Para volver al estado inicial: `python lessons/00_seed.py`.
+
+### Sandbox
+
+[`notebooks/sandbox.ipynb`](notebooks/sandbox.ipynb) reúne todo en un solo lugar para experimentar: escribir y ver la copia en cada nodo, leer el oplog, comparar planes con y sin índice, cambiar las prioridades para elegir otro PRIMARY, medir write concerns, ver a qué nodo va cada read preference, provocar un failover con gráfico de escrituras por segundo, observar los roles mientras apagas nodos y escuchar change streams. Las
+celdas marcadas **Juega aquí** están hechas para cambiarlas. Necesita el seed cargado.
+
+Hay dos formas de abrirlo:
+
+- **VS Code (Dev Container)**: abre el archivo y elige el kernel de Python 3.13 del contenedor. No usa puertos.
+- **Navegador (JupyterLab)**: el contenedor publica el puerto 8881 solo para esto.
+
+  ```bash
+  docker exec -it MongoReplicaLab jupyter lab --ip 0.0.0.0 --port 8888 --no-browser --notebook-dir /app
+  ```
+
+  El comando imprime una URL `http://127.0.0.1:8888/lab?token=…`: ábrela en tu equipo cambiando el puerto a
+  **8881** (`http://127.0.0.1:8881/lab?token=…`). `Ctrl+C` para cerrarlo.
 
 ## 6. Experimentos
 
