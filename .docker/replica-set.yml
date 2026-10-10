@@ -1,0 +1,56 @@
+# Replica set "rs0": three mongod nodes holding the same data.
+#   mongo1 -> preferred PRIMARY (priority 2)
+#   mongo2, mongo3 -> SECONDARY (copy the oplog of the PRIMARY)
+# Each node is published on its own host port (27021-27023) to open it from Compass with directConnection=true.
+
+x-mongod: &mongod
+  image: mongo:8.2.12
+  restart: unless-stopped
+  command: mongod --replSet rs0 --bind_ip_all --wiredTigerCacheSizeGB 0.25
+  healthcheck:
+    test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+    interval: 5s
+    timeout: 5s
+    retries: 30
+
+services:
+
+  mongo1:
+    <<: *mongod
+    container_name: 'MongoNode1'
+    ports:
+      - 27021:27017
+    volumes:
+      - mongo1-data:/data/db
+  mongo2:
+    <<: *mongod
+    container_name: 'MongoNode2'
+    ports:
+      - 27022:27017
+    volumes:
+      - mongo2-data:/data/db
+  mongo3:
+    <<: *mongod
+    container_name: 'MongoNode3'
+    ports:
+      - 27023:27017
+    volumes:
+      - mongo3-data:/data/db
+
+  # One-shot job: rs.initiate() of the replica set
+  mongo_init:
+    image: mongo:8.2.12
+    container_name: 'MongoReplicaInit'
+    restart: 'no'
+    volumes:
+      - ./replica-set:/replica-set:ro
+    entrypoint: ["bash", "/replica-set/init.sh"]
+    depends_on:
+      mongo1: { condition: service_healthy }
+      mongo2: { condition: service_healthy }
+      mongo3: { condition: service_healthy }
+
+volumes:
+  mongo1-data:
+  mongo2-data:
+  mongo3-data:
